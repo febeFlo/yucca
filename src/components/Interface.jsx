@@ -5,7 +5,7 @@ const Interface = () => {
     const { animations, animationIndex, setAnimationIndex } = useCharacterAnimations()
     return (
         <MantineProvider>
-        <Affix position={{ bottom: 50, right: 20 }}>
+        <Affix position={{ bottom: 50, left: 20 }}>
             <Stack>
                 {animations.map((animation, index) => (
                     <Button 
