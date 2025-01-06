@@ -3,13 +3,16 @@ import { useCharacterAnimations } from "../contexts/CharacterAnimations"
 
 const Interface = () => {
     const { animations, animationIndex, setAnimationIndex } = useCharacterAnimations()
+    const filteredAnimations = [1, 4, 5].map(index => ({ animation: animations[index], index }))
+    
     return (
         <MantineProvider>
-        <Affix position={{ bottom: 50, left: 20 }}>
+        <Affix 
+            position={{ bottom: 25, left: 20 }}>
             <Stack>
-                {animations.map((animation, index) => (
+                {filteredAnimations.map(({animation, index}) => (
                     <Button 
-                        key={animation}
+                        key={`${animation}-${index}`}
                         variant={index === animationIndex ? "filled" : "light"}
                         onClick={() => setAnimationIndex(index)}
                     >

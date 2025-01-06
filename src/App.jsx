@@ -8,13 +8,12 @@ function App() {
   return (
     <div className="flex h-screen items-center">
       {/* Left Section: 3D Model */}
-      <div className=" bg-gray-100 h-screen  w-1/2">
+      <div className="bg-gray-100 h-screen w-1/2 items-right">
         <MantineProvider>
-        <Interface />
-          <Canvas camera={{ position: [3, 1, 0], fov: 50 }} shadows>
+          <Interface />
+          <Canvas camera={{ position: [5, 1, 5], fov: 50 }} shadows>
             <Experience />
           </Canvas>
-          
         </MantineProvider>
       </div>
 

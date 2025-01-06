@@ -17,7 +17,7 @@ const Experience = () => {
         </group>
         <mesh 
             rotation={[-0.5 * Math.PI, 0, 0]} 
-            position={[0, -1, 0]} 
+            position={[0, 0, 0]} 
             receiveShadow
         >
             <planeGeometry args={[10, 10, 1, 1]} />
