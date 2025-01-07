@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import copyIcon from '../assets/icons/copy.png';
 import resetIcon from '../assets/icons/reset.png';
+import { useCharacterAnimations } from '../contexts/CharacterAnimations';
 
 const Chatbot = () => {
   const [isListening, setIsListening] = useState(false);
@@ -9,6 +10,7 @@ const Chatbot = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [audioElement, setAudioElement] = useState(null);
+  const { setIsSpeaking } = useCharacterAnimations();
 
   const recognition = useMemo(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -57,10 +59,17 @@ const Chatbot = () => {
     const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
     setAudioElement(audio);
     
+    setIsSpeaking(true);
+
     // Play the new audio
     audio.play().catch(error => {
       console.error('Error playing audio:', error);
       setErrorMessage('Failed to play audio response');
+      setIsSpeaking(false);
+    });
+
+    audio.addEventListener('ended', () => {
+      setIsSpeaking(false);
     });
   };
 
@@ -135,6 +144,15 @@ const Chatbot = () => {
     playAudio(voiceData);
   };
 
+  const handleStopVoice = () => {
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0; 
+    }
+    setAudioElement(null); 
+    setIsSpeaking(false);
+  };
+
   return (
     <div className="flex items-center md:w-11/12 p-6 bg-orange-50 rounded-lg">
       <div className="w-full">
@@ -151,6 +169,12 @@ const Chatbot = () => {
                 className="text-red-500 hover:text-red-700 font-semibold"
               >
                 <img src={resetIcon} alt="Reset" className="h-4" />
+              </button>
+              <button
+                onClick={handleStopVoice}
+                className="px-4 py-2 rounded-full border border-orange-500 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white text-sm md:text-base"
+                >
+                Stop Voice
               </button>
             </div>
             <div className="md:h-96 h-32 overflow-y-auto border border-orange-300 rounded-lg p-4 bg-white">
