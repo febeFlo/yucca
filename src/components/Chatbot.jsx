@@ -222,7 +222,7 @@ const Chatbot = () => {
                             text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');
                             
                             // Handle links
-                            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-orange-600 hover:text-orange-800">$1</a>');
+                            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank " class="text-orange-600 hover:text-orange-800">$1</a>');
                             
                             return <span dangerouslySetInnerHTML={{ __html: text }} />;
                           }
