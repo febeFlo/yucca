@@ -8,19 +8,18 @@ const Chatbot = () => {
   const [responses, setResponses] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [audioElement, setAudioElement] = useState(null);
 
   const recognition = useMemo(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
-      recog.lang = "id-ID"; 
+      recog.lang = "id-ID";
       recog.continuous = true;
       return recog;
     }
     return null;
   }, []);
-
-  const synth = window.speechSynthesis;
 
   useEffect(() => {
     if (recognition) {
@@ -39,32 +38,50 @@ const Chatbot = () => {
 
   const handleMicToggle = () => {
     if (isListening) {
-      recognition.stop();
+      recognition?.stop();
       setIsListening(false);
     } else {
-      recognition.start();
+      recognition?.start();
       setIsListening(true);
     }
   };
 
+  const playAudio = (base64Audio) => {
+    // Stop any currently playing audio
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+
+    // Create a new audio element
+    const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+    setAudioElement(audio);
+    
+    // Play the new audio
+    audio.play().catch(error => {
+      console.error('Error playing audio:', error);
+      setErrorMessage('Failed to play audio response');
+    });
+  };
 
   const handleShortcut = (text) => {
-    handleSend1(text); 
+    handleSend(text);
   };
 
-   const handleSend = async () => {
-    if (!inputText.trim()) {
+  const handleSend = async (textOverride) => {
+    const messageText = textOverride || inputText;
+    if (!messageText.trim()) {
       setErrorMessage("Input cannot be empty!");
       return;
     }
 
-    setErrorMessage(""); 
-    setIsLoading(true);  
+    setErrorMessage("");
+    setIsLoading(true);
     try {
       const response = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: inputText }),
+        body: JSON.stringify({ message: messageText }),
       });
 
       if (!response.ok) {
@@ -72,90 +89,50 @@ const Chatbot = () => {
       }
 
       const data = await response.json();
-      if (!data.response || !data.response.trim) {
-        throw new Error("Invalid response from server");
+      
+      if (!data.response || !data.response.text || !data.response.voice) {
+        throw new Error("Invalid response format from server");
       }
-
-      const botReply = data.response.trim;
 
       setResponses((prev) => [
         ...prev,
         {
-          input: inputText,
-          reply: botReply,
+          input: messageText,
+          reply: data.response.text.formatted,
+          voice: data.response.voice,
           timestamp: new Date().toLocaleString(),
         },
       ]);
 
-      const utterance = new SpeechSynthesisUtterance(botReply);
-      utterance.lang = "id-ID";
-      synth.speak(utterance);
+      // Play the voice response
+      playAudio(data.response.voice);
 
-      setInputText("");
+      if (!textOverride) {
+        setInputText("");
+      }
     } catch (error) {
       setErrorMessage(`Failed to send request: ${error.message}`);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
-  
-  const handleSend1 = async (text) => {
-    if (!text.trim()) {
-      setErrorMessage("Input cannot be empty!");
-      return;
-    }
-  
-    setErrorMessage(""); 
-    setIsLoading(true);  
-    try {
-      const response = await fetch("http://localhost:3000/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),  
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      if (!data.response || !data.response.trim) {
-        throw new Error("Invalid response from server");
-      }
-  
-      const botReply = data.response.trim;
-  
-      setResponses((prev) => [
-        ...prev,
-        {
-          input: text, 
-          reply: botReply,
-          timestamp: new Date().toLocaleString(),
-        },
-      ]);
-  
-      const utterance = new SpeechSynthesisUtterance(botReply);
-      utterance.lang = "id-ID";
-      synth.speak(utterance);
-  
-    } catch (error) {
-      setErrorMessage(`Failed to send request: ${error.message}`);
-    } finally {
-      setIsLoading(false); 
-    }
-  };
-  
 
   const handleReset = () => {
     setResponses([]);
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
   };
 
   const handleCopy = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Response copied to clipboard!");
-    }).catch(() => {
-      alert("Failed to copy response.");
-    });
+    navigator.clipboard.writeText(text)
+      .then(() => alert("Response copied to clipboard!"))
+      .catch(() => alert("Failed to copy response."));
+  };
+
+  const replayVoice = (voiceData) => {
+    playAudio(voiceData);
   };
 
   return (
@@ -173,7 +150,7 @@ const Chatbot = () => {
                 onClick={handleReset}
                 className="text-red-500 hover:text-red-700 font-semibold"
               >
-                <img src={resetIcon} alt="Deskripsi gambar" className="h-4" />
+                <img src={resetIcon} alt="Reset" className="h-4" />
               </button>
             </div>
             <div className="md:h-96 h-32 overflow-y-auto border border-orange-300 rounded-lg p-4 bg-white">
@@ -185,21 +162,80 @@ const Chatbot = () => {
                   <p className="text-sm md:text-base">
                     <strong className="text-orange-500">You:</strong> {res.input}
                   </p>
-                  <p className="text-sm md:text-base">
-                    <strong className="text-orange-700 ">Yucca:</strong> {res.reply}
-                    <button
-                      onClick={() => handleCopy(res.reply)}
-                      className="ml-2 text-blue-500 hover:text-blue-700 underline text-sm"
-                    >
-                      <img src={copyIcon} alt="Deskripsi gambar" className="h-4" />
-                    </button>
-                  </p>
+                  <div className="flex items-start gap-2">
+                    <div className="text-sm md:text-base flex-grow prose prose-orange max-w-none">
+                      <strong className="text-orange-700">Yucca:</strong>{' '}
+                      <div className="mt-2">
+                        {res.reply.split('\n').map((line, i) => {
+                          // Handle numbered list with bold headers
+                          const numberedHeaderMatch = line.match(/^(\d+)\.\*\*(.*?)\*\*$/);
+                          if (numberedHeaderMatch) {
+                            return (
+                              <div key={i} className="flex items-start my-1">
+                                <span className="mr-2 font-bold min-w-[25px]">{numberedHeaderMatch[1]}.</span>
+                                <span className="font-bold">{numberedHeaderMatch[2]}</span>
+                              </div>
+                            );
+                          }
+
+                          // Regular numbered list
+                          const numberedMatch = line.match(/^(\d+)\.\s*(.+)/);
+                          if (numberedMatch) {
+                            return (
+                              <div key={i} className="flex items-start my-1">
+                                <span className="mr-2 min-w-[25px]">{numberedMatch[1]}.</span>
+                                <span>{processMarkdown(numberedMatch[2])}</span>
+                              </div>
+                            );
+                          }
+
+                          // Process regular text with markdown
+                          function processMarkdown(text) {
+                            // Handle bold and italic
+                            text = text.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+                            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                            text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');
+                            
+                            // Handle links
+                            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-orange-600 hover:text-orange-800">$1</a>');
+                            
+                            return <span dangerouslySetInnerHTML={{ __html: text }} />;
+                          }
+
+                          // Regular paragraph
+                          return line.trim() ? (
+                            <p key={i} className="my-1">
+                              {processMarkdown(line)}
+                            </p>
+                          ) : <br key={i} />;
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleCopy(res.reply)}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <img src={copyIcon} alt="Copy" className="h-4" />
+                      </button>
+                      <button
+                        onClick={() => replayVoice(res.voice)}
+                        className="text-orange-500 hover:text-orange-700"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                   {index < responses.length - 1 && <hr className="my-2" />}
                 </div>
               ))}
             </div>
           </div>
         )}
+
         {responses.length === 0 && (
           <div className="flex gap-2 mb-4 pt-2">
             <button
@@ -211,13 +247,14 @@ const Chatbot = () => {
             </button>
             <button
               onClick={() => handleShortcut("Beasiswa yang ada di UC ada apa saja?")}
-              className="px-4 py-2 rounded-full border border-orange-500 bg-orange-5 hover:bg-orange-600  text-orange-600 hover:text-white text-sm md:text-base"
+              className="px-4 py-2 rounded-full border border-orange-500 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white text-sm md:text-base"
               disabled={isLoading}
             >
               Info Beasiswa UC
             </button>
           </div>
         )}
+
         <div className="pt-4">
           <textarea
             value={inputText}
@@ -233,23 +270,23 @@ const Chatbot = () => {
             </div>
           )}
 
-
-
           <div className="flex justify-between mb-4">
             <button
               onClick={handleMicToggle}
-              className={`px-6 py-2 rounded-lg font-semibold text-sm md:text-base ${isListening
-                ? "bg-orange-700 text-white"
-                : "bg-orange-500 text-white hover:bg-orange-600"
-                }`}
+              className={`px-6 py-2 rounded-lg font-semibold text-sm md:text-base ${
+                isListening
+                  ? "bg-orange-700 text-white"
+                  : "bg-orange-500 text-white hover:bg-orange-600"
+              }`}
             >
               {isListening ? "Stop Mic" : "Start Mic"}
             </button>
 
             <button
-              onClick={handleSend}
-              className={`text-sm md:text-base px-6 py-2 rounded-lg font-semibold bg-orange-500 text-white hover:bg-orange-600 ${isLoading && "opacity-50 cursor-not-allowed"
-                }`}
+              onClick={() => handleSend()}
+              className={`text-sm md:text-base px-6 py-2 rounded-lg font-semibold bg-orange-500 text-white hover:bg-orange-600 ${
+                isLoading && "opacity-50 cursor-not-allowed"
+              }`}
               disabled={isLoading}
             >
               {isLoading ? "Waiting for Response..." : "Send Chat"}
