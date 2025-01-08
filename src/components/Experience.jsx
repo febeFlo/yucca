@@ -12,8 +12,10 @@ const Experience = () => {
             shadow-mapSize-width={1024}
             shadow-mapSize-height={1024}
         />
-        <group position={[0, -1, 0]}>
-            <Yucca />
+        <group position={[0, 0, 0]}>
+            <group position={[-5, -3, -4.5]}> 
+                <Yucca /> 
+            </group>
         </group>
         <mesh 
             rotation={[-0.5 * Math.PI, 0, 0]} 
