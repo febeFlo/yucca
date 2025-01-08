@@ -366,7 +366,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
             </button>
 
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={isLoading}
               className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl bg-orange-500 dark:bg-orange-600 hover:bg-orange-600 dark:hover:bg-orange-700 text-white font-medium text-sm flex items-center justify-center gap-2 ${isLoading ? "opacity-75 cursor-not-allowed" : ""
                 }`}
