@@ -71,8 +71,8 @@ const App = () => {
         {/* Info Card - Hidden on very small screens */}
         <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-3 md:p-4 shadow-lg transition-all duration-300 hover:-translate-y-1">
-            <p className="text-orange-600 dark:text-orange-400 font-medium text-sm md:text-base">Meet Yucca</p>
-            <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">Your UC Guide</p>
+            <p className="text-orange-600 dark:text-orange-400 font-medium text-sm md:text-base">Temui Yucca</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">Panduan UC Anda</p>
           </div>
         </div>
       </div>
