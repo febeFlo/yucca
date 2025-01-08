@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import copyIcon from '../assets/icons/copy.png';
-import resetIcon from '../assets/icons/reset.png';
 import { useCharacterAnimations } from '../contexts/CharacterAnimations';
 
 const Chatbot = () => {
@@ -49,19 +47,16 @@ const Chatbot = () => {
   };
 
   const playAudio = (base64Audio) => {
-    // Stop any currently playing audio
     if (audioElement) {
       audioElement.pause();
       audioElement.currentTime = 0;
     }
 
-    // Create a new audio element
     const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
     setAudioElement(audio);
     
     setIsSpeaking(true);
 
-    // Play the new audio
     audio.play().catch(error => {
       console.error('Error playing audio:', error);
       setErrorMessage('Failed to play audio response');
@@ -113,7 +108,6 @@ const Chatbot = () => {
         },
       ]);
 
-      // Play the voice response
       playAudio(data.response.voice);
 
       if (!textOverride) {
@@ -147,173 +141,146 @@ const Chatbot = () => {
   const handleStopVoice = () => {
     if (audioElement) {
       audioElement.pause();
-      audioElement.currentTime = 0; 
+      audioElement.currentTime = 0;
     }
-    setAudioElement(null); 
+    setAudioElement(null);
     setIsSpeaking(false);
   };
 
   return (
-    <div className="flex items-center md:w-11/12 p-6 bg-orange-50 rounded-lg">
-      <div className="w-full">
-        <h1 className="md:text-2xl text-lg font-bold text-orange-600 mb-2 text-start animate-wobble">
-          Hello, I'm Yucca Ready to Help You
-        </h1>
-
-        {responses.length > 0 && (
+    <div className="h-full flex flex-col bg-white">
+      {/* Header */}
+      <div className="px-6 py-4 bg-orange-50 border-b border-orange-100">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-orange-500 rounded-xl p-3 text-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+            </svg>
+          </div>
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="md:text-lg text-md font-bold text-orange-600">Responses:</h2>
-              <button
-                onClick={handleReset}
-                className="text-red-500 hover:text-red-700 font-semibold"
-              >
-                <img src={resetIcon} alt="Reset" className="h-4" />
-              </button>
-              <button
-                onClick={handleStopVoice}
-                className="px-4 py-2 rounded-full border border-orange-500 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white text-sm md:text-base"
-                >
-                Stop Voice
-              </button>
-            </div>
-            <div className="md:h-96 h-32 overflow-y-auto border border-orange-300 rounded-lg p-4 bg-white">
-              {responses.map((res, index) => (
-                <div key={index} className="mb-4">
-                  <p className="text-gray-500 text-xs">
-                    <em>{res.timestamp}</em>
-                  </p>
-                  <p className="text-sm md:text-base">
-                    <strong className="text-orange-500">You:</strong> {res.input}
-                  </p>
-                  <div className="flex items-start gap-2">
-                    <div className="text-sm md:text-base flex-grow prose prose-orange max-w-none">
-                      <strong className="text-orange-700">Yucca:</strong>{' '}
-                      <div className="mt-2">
-                        {res.reply.split('\n').map((line, i) => {
-                          // Handle numbered list with bold headers
-                          const numberedHeaderMatch = line.match(/^(\d+)\.\*\*(.*?)\*\*$/);
-                          if (numberedHeaderMatch) {
-                            return (
-                              <div key={i} className="flex items-start my-1">
-                                <span className="mr-2 font-bold min-w-[25px]">{numberedHeaderMatch[1]}.</span>
-                                <span className="font-bold">{numberedHeaderMatch[2]}</span>
-                              </div>
-                            );
-                          }
+            <h1 className="text-2xl font-bold text-gray-800">Chat with Yucca</h1>
+            <p className="text-orange-600">Your friendly UC assistant</p>
+          </div>
+        </div>
+      </div>
 
-                          // Regular numbered list
-                          const numberedMatch = line.match(/^(\d+)\.\s*(.+)/);
-                          if (numberedMatch) {
-                            return (
-                              <div key={i} className="flex items-start my-1">
-                                <span className="mr-2 min-w-[25px]">{numberedMatch[1]}.</span>
-                                <span>{processMarkdown(numberedMatch[2])}</span>
-                              </div>
-                            );
-                          }
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden px-6 py-4">
+        {responses.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center">
+            <div className="max-w-lg w-full space-y-8">
+              <div className="text-center space-y-3">
+                <h2 className="text-2xl font-bold text-gray-800">Welcome to UC!</h2>
+                <p className="text-gray-600">
+                  Hi there! I'm here to help you learn about Universitas Ciputra.
+                </p>
+              </div>
 
-                          // Process regular text with markdown
-                          function processMarkdown(text) {
-                            // Handle bold and italic
-                            text = text.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
-                            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-                            text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');
-                            
-                            // Handle links
-                            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank " class="text-orange-600 hover:text-orange-800">$1</a>');
-                            
-                            return <span dangerouslySetInnerHTML={{ __html: text }} />;
-                          }
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <QuickActionButton
+                  onClick={() => handleShortcut("Bagaimana proses pendaftaran UC?")}
+                  disabled={isLoading}
+                  icon="📝"
+                  title="Registration Guide"
+                  description="Learn about admission steps"
+                />
+                <QuickActionButton
+                  onClick={() => handleShortcut("Beasiswa yang ada di UC ada apa saja?")}
+                  disabled={isLoading}
+                  icon="🎓"
+                  title="Scholarship Info"
+                  description="Explore financial support"
+                />
+              </div>
 
-                          // Regular paragraph
-                          return line.trim() ? (
-                            <p key={i} className="my-1">
-                              {processMarkdown(line)}
-                            </p>
-                          ) : <br key={i} />;
-                        })}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleCopy(res.reply)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <img src={copyIcon} alt="Copy" className="h-4" />
-                      </button>
-                      <button
-                        onClick={() => replayVoice(res.voice)}
-                        className="text-orange-500 hover:text-orange-700"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                        </svg>
-                      </button>
-                    </div>
+              <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                <div className="flex gap-3">
+                  <div className="text-orange-500 mt-1">💡</div>
+                  <div>
+                    <h3 className="font-medium text-gray-800">Pro Tip</h3>
+                    <p className="text-gray-600 text-sm mt-1">
+                      Feel free to ask about courses, campus life, or anything about UC!
+                    </p>
                   </div>
-                  {index < responses.length - 1 && <hr className="my-2" />}
                 </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col">
+            <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-4">
+              {responses.map((res, index) => (
+                <ChatMessage
+                  key={index}
+                  response={res}
+                  onCopy={handleCopy}
+                  onReplay={replayVoice}
+                />
               ))}
             </div>
           </div>
         )}
+      </div>
 
-        {responses.length === 0 && (
-          <div className="flex gap-2 mb-4 pt-2">
-            <button
-              onClick={() => handleShortcut("Bagaimana proses pendaftaran UC?")}
-              className="px-4 py-2 rounded-full border border-orange-500 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white text-sm md:text-base"
-              disabled={isLoading}
-            >
-              Info Pendaftaran UC
-            </button>
-            <button
-              onClick={() => handleShortcut("Beasiswa yang ada di UC ada apa saja?")}
-              className="px-4 py-2 rounded-full border border-orange-500 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white text-sm md:text-base"
-              disabled={isLoading}
-            >
-              Info Beasiswa UC
-            </button>
+      {/* Input Section */}
+      <div className="p-4 border-t border-orange-100 bg-orange-50">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <div className="relative">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Ask me anything about UC!"
+              rows="3"
+              className="w-full px-4 py-3 rounded-xl border border-orange-200 focus:border-orange-400 focus:ring focus:ring-orange-100 resize-none bg-white"
+            />
+            
+            {errorMessage && (
+              <p className="absolute -top-6 left-0 text-red-500 text-sm bg-red-50 px-3 py-1 rounded-lg">
+                {errorMessage}
+              </p>
+            )}
           </div>
-        )}
 
-        <div className="pt-4">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            rows="1"
-            placeholder="Start talking or type here to ask about UC..."
-            className="w-full text-sm md:text-base p-4 rounded-lg border border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500 mb-4"
-          />
-
-          {errorMessage && (
-            <div className="text-red-600 mb-4 text-sm font-semibold">
-              {errorMessage}
-            </div>
-          )}
-
-          <div className="flex justify-between mb-4">
+          <div className="flex gap-3">
             <button
               onClick={handleMicToggle}
-              className={`px-6 py-2 rounded-lg font-semibold text-sm md:text-base ${
+              className={`flex-1 py-2.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 ${
                 isListening
-                  ? "bg-orange-700 text-white"
-                  : "bg-orange-500 text-white hover:bg-orange-600"
+                  ? "bg-orange-100 text-orange-600 border-2 border-orange-400"
+                  : "bg-white text-gray-600 border border-orange-200 hover:border-orange-400 hover:text-orange-600"
               }`}
             >
-              {isListening ? "Stop Mic" : "Start Mic"}
+              {isListening ? (
+                <>
+                  <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                  Recording...
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">🎤</span>
+                  Voice Message
+                </>
+              )}
             </button>
 
             <button
               onClick={() => handleSend()}
-              className={`text-sm md:text-base px-6 py-2 rounded-lg font-semibold bg-orange-500 text-white hover:bg-orange-600 ${
-                isLoading && "opacity-50 cursor-not-allowed"
-              }`}
               disabled={isLoading}
+              className={`flex-1 py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium text-sm flex items-center justify-center gap-2 ${
+                isLoading ? "opacity-75 cursor-not-allowed" : ""
+              }`}
             >
-              {isLoading ? "Waiting for Response..." : "Send Chat"}
+              {isLoading ? (
+                <>
+                  <span className="w-2 h-2 bg-white rounded-full animate-bounce"></span>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Send Message
+                  <span className="text-lg">✨</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -321,5 +288,70 @@ const Chatbot = () => {
     </div>
   );
 };
+
+const QuickActionButton = ({ onClick, disabled, icon, title, description }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className="w-full p-4 bg-white rounded-xl border border-orange-100 hover:border-orange-200 hover:shadow-md text-left transition-all duration-300"
+  >
+    <div className="space-y-3">
+      <span className="text-2xl">{icon}</span>
+      <div>
+        <h3 className="text-gray-800 font-medium">{title}</h3>
+        <p className="text-gray-500 text-sm mt-1">{description}</p>
+      </div>
+    </div>
+  </button>
+);
+
+const ChatMessage = ({ response, onCopy, onReplay }) => (
+  <div className="space-y-2">
+    {/* User Message */}
+    <div className="flex justify-end">
+      <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%] shadow-sm">
+        <p className="text-sm">{response.input}</p>
+      </div>
+    </div>
+
+    {/* Assistant Message */}
+    <div className="flex justify-start">
+      <div className="bg-orange-50 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%] shadow-sm group">
+        <div className="prose max-w-none text-gray-800">
+          {response.reply.split('\n').map((line, i) => (
+            <p key={i} className="mb-2 last:mb-0">
+              {line}
+            </p>
+          ))}
+        </div>
+
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-orange-100">
+            <ActionButton onClick={() => onCopy(response.reply)} title="Copy">
+              📋
+            </ActionButton>
+            <ActionButton onClick={() => onReplay(response.voice)} title="Play">
+              🔊
+            </ActionButton>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div className="text-xs text-gray-400 px-4">
+      {response.timestamp}
+    </div>
+  </div>
+);
+
+const ActionButton = ({ onClick, children, title }) => (
+  <button
+    onClick={onClick}
+    title={title}
+    className="p-1 rounded hover:bg-orange-100 text-gray-500 transition-colors"
+  >
+    {children}
+  </button>
+);
 
 export default Chatbot;
