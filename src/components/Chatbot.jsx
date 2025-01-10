@@ -36,11 +36,30 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
       recog.lang = "id-ID";
-      recog.continuous = true;
+      recog.continuous = false; 
+
+      recog.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0].transcript)
+          .join("");
+        setInputText(transcript);
+      };
+
+      recog.onend = () => {
+        setIsListening(false); 
+      };
+
+      recog.onerror = (error) => {
+        console.error('Speech Recognition error:', error);
+        setErrorMessage('Speech recognition failed.');
+        setIsListening(false);
+      };
+
       return recog;
     }
     return null;
   }, []);
+
 
   useEffect(() => {
     if (recognition) {
@@ -58,12 +77,21 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   }, [recognition, isListening]);
 
   const handleMicToggle = () => {
-    if (isListening) {
-      recognition?.stop();
-      setIsListening(false);
+    if (recognition) {
+      if (isListening) {
+        recognition.stop();
+        setIsListening(false);
+        if (inputText.trim()) {
+          handleSend(inputText);
+          setInputText("");
+        }
+      } else {
+        recognition.start();
+        setIsListening(true);
+        setErrorMessage("");
+      }
     } else {
-      recognition?.start();
-      setIsListening(true);
+      setErrorMessage("Pengenalan suara tidak didukung di browser Anda.");
     }
   };
 
