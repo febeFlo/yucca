@@ -36,7 +36,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
       recog.lang = "id-ID";
-      recog.continuous = false; // PERUBAHAN: set continuous ke false
+      recog.continuous = false; 
 
       recog.onresult = (event) => {
         const transcript = Array.from(event.results)
@@ -46,7 +46,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
       };
 
       recog.onend = () => {
-        setIsListening(false); // Pastikan isListening di set ke false
+        setIsListening(false); 
       };
 
       recog.onerror = (error) => {
