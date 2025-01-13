@@ -1,5 +1,9 @@
 import { OrbitControls } from "@react-three/drei";
 import Yucca from "./Yucca";
+import YuccaEnterance from "./YuccaEnterance";
+import YuccaMendengar from "./YuccaMendengar";
+import YuccaBerpikir from "./YuccaBerpikir";
+import YuccaBerbicara from "./YuccaBerbicara";
 
 const Experience = () => {
     return (
@@ -13,8 +17,9 @@ const Experience = () => {
             shadow-mapSize-height={1024}
         />
         <group position={[0, 0, 0]}>
-            <group position={[-5, -3, -4.5]}> 
-                <Yucca /> 
+            <group position={[-2, -2, 0]} rotation={[0, Math.PI / 2, 0]}> 
+                {/* Ini yang diganti */}
+                <YuccaBerpikir /> 
             </group>
         </group>
         <mesh 

@@ -3,11 +3,11 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 const CharacterAnimationsContext = createContext({});
 
 export const CharacterAnimationsProvider = (props) => {
-  const [animationIndex, setAnimationIndex] = useState(5); 
+  const [animationIndex, setAnimationIndex] = useState(0); 
   const [animations, setAnimations] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   
-  const idleAnimations = [4, 5];
+  const idleAnimations = [0];
   
   const startRandomAnimations = useCallback(() => {
     if (!isSpeaking) {
