@@ -19,7 +19,7 @@ const Experience = () => {
         <group position={[0, 0, 0]}>
             <group position={[-2, -2, 0]} rotation={[0, Math.PI / 2, 0]}> 
                 {/* Ini yang diganti */}
-                <YuccaBerpikir /> 
+                <YuccaBerbicara /> 
             </group>
         </group>
         <mesh 
