@@ -4,6 +4,7 @@ import YuccaEnterance from "./YuccaEnterance";
 import YuccaMendengar from "./YuccaMendengar";
 import YuccaBerpikir from "./YuccaBerpikir";
 import YuccaBerbicara from "./YuccaBerbicara";
+import Yucca_idleblend5 from "./Yucca_idleblend5";
 
 const Experience = () => {
     return (
@@ -19,7 +20,7 @@ const Experience = () => {
         <group position={[0, 0, 0]}>
             <group position={[-2, -2, 0]} rotation={[0, Math.PI / 2, 0]}> 
                 {/* Ini yang diganti */}
-                <YuccaBerbicara /> 
+                <Yucca_idleblend5 /> 
             </group>
         </group>
         <mesh 
