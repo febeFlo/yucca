@@ -59,7 +59,7 @@ const App = () => {
         } transition-colors`}>
           <MantineProvider>
             <Canvas 
-              camera={{ position: [3, 1, 0], fov: 50 }} 
+              camera={{ position: [3, 0, 0], fov: 50 }} 
               shadows
             >
               <color attach="background" args={[isDarkMode ? '#1a1b1e' : '#fff7ed']} />

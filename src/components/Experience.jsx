@@ -5,6 +5,7 @@ import YuccaMendengar from "./YuccaMendengar";
 import YuccaBerpikir from "./YuccaBerpikir";
 import YuccaBerbicara from "./YuccaBerbicara";
 import Yucca_idleblend5 from "./Yucca_idleblend5";
+import YuccaIdleLompat from "./YuccaIdleLompat";
 
 const Experience = () => {
     return (
@@ -18,9 +19,9 @@ const Experience = () => {
             shadow-mapSize-height={1024}
         />
         <group position={[0, 0, 0]}>
-            <group position={[-2, -2, 0]} rotation={[0, Math.PI / 2, 0]}> 
+            <group position={[-2, -1.5, 0]} rotation={[0, Math.PI / 2, 0]}> 
                 {/* Ini yang diganti */}
-                <YuccaMendengar /> 
+                <YuccaIdleLompat /> 
             </group>
         </group>
         <mesh 
