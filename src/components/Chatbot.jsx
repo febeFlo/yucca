@@ -36,30 +36,11 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
       recog.lang = "id-ID";
-      recog.continuous = false; 
-
-      recog.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join("");
-        setInputText(transcript);
-      };
-
-      recog.onend = () => {
-        setIsListening(false); 
-      };
-
-      recog.onerror = (error) => {
-        console.error('Speech Recognition error:', error);
-        setErrorMessage('Speech recognition failed.');
-        setIsListening(false);
-      };
-
+      recog.continuous = true;
       return recog;
     }
     return null;
   }, []);
-
 
   useEffect(() => {
     if (recognition) {
@@ -77,21 +58,12 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   }, [recognition, isListening]);
 
   const handleMicToggle = () => {
-    if (recognition) {
-      if (isListening) {
-        recognition.stop();
-        setIsListening(false);
-        if (inputText.trim()) {
-          handleSend(inputText);
-          setInputText("");
-        }
-      } else {
-        recognition.start();
-        setIsListening(true);
-        setErrorMessage("");
-      }
+    if (isListening) {
+      recognition?.stop();
+      setIsListening(false);
     } else {
-      setErrorMessage("Pengenalan suara tidak didukung di browser Anda.");
+      recognition?.start();
+      setIsListening(true);
     }
   };
 
@@ -266,7 +238,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
         {responses.length === 0 ? (
           <div className="h-full">
-            <div className="w-full space-y-6 sm:space-y-8 py-4">
+            <div className="w-full py-4">
               {/* Welcome content remains the same */}
               <div className="text-center space-y-3 w-full">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Selamat datang di UC!</h2>
@@ -274,7 +246,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
                   Hai! Saya di sini untuk membantu Anda mempelajari tentang Universitas Ciputra.</p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mt-6">
                 <QuickActionButton
                   onClick={() => handleShortcut("Bagaimana proses pendaftaran UC?")}
                   disabled={isLoading}
@@ -297,7 +269,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
                   description="Memahami kebijakan dan pedoman akademik UC"
                 />
                 <QuickActionButton
-                  onClick={() => handleShortcut("Berikan Program Studi berdasarkan peminatan calon mahasiswa")}
+                  onClick={() => handleShortcut("Berikan Saran Jurusan apa yang bagus untuk saya?")}
                   disabled={isLoading}
                   icon="🎯"
                   title="Program Studi"
@@ -310,6 +282,15 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
                   title="Organisasi Kemahasiswaan"
                   description="Jelajahi organisasi kemahasiswaan dan kegiatan kampus"
                 />
+                <QuickActionButton
+                  onClick={() => handleShortcut("Apa saja Prestasi Mahasiswa UC?")}
+                  disabled={isLoading}
+                  icon="🏆"
+                  title="Prestasi Mahasiswa UC"
+                  description="Prestasi yang di peroleh dari mahasiswa uc"
+                />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-3 sm:gap-4 mt-4">
                 <QuickActionButton
                   onClick={() => handleShortcut("Apa saja makanan dan tempat tinggal yang ada di Sekitar UC")}
                   disabled={isLoading}
@@ -326,7 +307,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
                 />
               </div>
 
-              <div className="bg-orange-50 dark:bg-gray-800 rounded-xl p-4 border border-orange-100 dark:border-gray-700">
+              <div className="mt-8 bg-orange-50 dark:bg-gray-800 rounded-xl p-4 border border-orange-100 dark:border-gray-700">
                 <div className="flex gap-3">
                   <div className="text-orange-500">💡</div>
                   <div>
@@ -376,8 +357,8 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
             <button
               onClick={handleMicToggle}
               className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 ${isListening
-                  ? "bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 border-2 border-orange-400 dark:border-orange-500"
-                  : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-orange-200 dark:border-gray-600 hover:border-orange-400 dark:hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-400"
+                ? "bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 border-2 border-orange-400 dark:border-orange-500"
+                : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-orange-200 dark:border-gray-600 hover:border-orange-400 dark:hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-400"
                 }`}
             >
               {isListening ? (
@@ -394,7 +375,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
             </button>
 
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={isLoading}
               className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl bg-orange-500 dark:bg-orange-600 hover:bg-orange-600 dark:hover:bg-orange-700 text-white font-medium text-sm flex items-center justify-center gap-2 ${isLoading ? "opacity-75 cursor-not-allowed" : ""
                 }`}
@@ -464,6 +445,16 @@ const ChatMessage = ({ response, onCopy, onReplay }) => (
               ),
               strong: ({ children }) => (
                 <strong className="font-bold">{children}</strong>
+              ),
+              a: ({ href, children }) => (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-500 underline"
+                >
+                  {children}
+                </a>
               ),
             }}
           >
