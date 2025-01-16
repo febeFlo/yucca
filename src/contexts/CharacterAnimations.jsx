@@ -42,7 +42,7 @@ export const CharacterAnimationsProvider = (props) => {
 
     listeningSequenceRef.current = setTimeout(() => {
       if (CIsListening) { // Check if still listening
-        setAnimationIndex(14); // Switch to loop
+        setAnimationIndex(16); // Switch to loop
         console.log('Switching to MendengarLoop');
       }
     }, LISTENING_CONFIG.START_DURATION);
