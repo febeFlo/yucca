@@ -18,7 +18,7 @@ export const CharacterAnimationsProvider = (props) => {
   const cancelScheduledAnimation = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+      timeoutRef.current = null; 
     }
     if (idleIntervalRef.current) {
       clearInterval(idleIntervalRef.current);
