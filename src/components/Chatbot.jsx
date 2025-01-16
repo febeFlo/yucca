@@ -14,7 +14,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { setAnimationIndex } = useCharacterAnimations();
-  const { setCIsListening, setIsEndingListening } = useCharacterAnimations();
+  const { setCIsListening, setIsProcessing, setIsEndingListening } = useCharacterAnimations();
 
 
   useEffect(() => {
@@ -112,6 +112,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
 
     setErrorMessage("");
     setIsLoading(true);
+    setIsProcessing(true);
     try {
       const response = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
@@ -148,6 +149,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
       setErrorMessage(`Failed to send request: ${error.message}`);
     } finally {
       setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 

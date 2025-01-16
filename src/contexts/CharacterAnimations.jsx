@@ -15,6 +15,7 @@ export const CharacterAnimationsProvider = (props) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [CIsListening, setCIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isEndingSequence, setIsEndingSequence] = useState(false);
   const timeoutRef = useRef(null);
   const idleIntervalRef = useRef(null);
@@ -23,6 +24,7 @@ export const CharacterAnimationsProvider = (props) => {
   const [isEndingListening, setIsEndingListening] = useState(false);
 
   const idleAnimations = [3, 4, 9];
+  const thinkingAnimations = [1, 7, 8];
 
   const cancelScheduledAnimation = () => {
     [timeoutRef, idleIntervalRef, listeningSequenceRef].forEach(ref => {
@@ -68,6 +70,17 @@ export const CharacterAnimationsProvider = (props) => {
       }
     }
   }, [CIsListening, isEndingListening]);
+
+  const startThinkingAnimations = () => {
+    // Clear any existing interval
+    cancelScheduledAnimation();
+
+    // Randomly select from thinking animations every 2-3 seconds
+    idleIntervalRef.current = setInterval(() => {
+      const nextIndex = thinkingAnimations[Math.floor(Math.random() * thinkingAnimations.length)];
+      setAnimationIndex(nextIndex);
+    }, 2000 + Math.random() * 1000);
+  };
 
   const startIdleAnimations = () => {
     if (idleIntervalRef.current) {
@@ -135,7 +148,7 @@ export const CharacterAnimationsProvider = (props) => {
   useEffect(() => {
     if (isSpeaking) {
       stopIdleAnimations();
-      setAnimationIndex(11);
+      setAnimationIndex(15);
       lastIndexesRef.current = [];
     } else if (!CIsListening && !isLoading) {
       setAnimationIndex(3);
@@ -147,13 +160,22 @@ export const CharacterAnimationsProvider = (props) => {
   useEffect(() => {
     if (isLoading) {
       stopIdleAnimations();
-      setAnimationIndex(7);
+      setAnimationIndex(10);
       lastIndexesRef.current = [];
     } else if (!CIsListening && !isSpeaking) {
       setAnimationIndex(3);
       startIdleAnimations();
     }
   }, [isLoading]);
+
+  useEffect(() => {
+    if (isProcessing) {
+      startThinkingAnimations();
+    } else if (!isSpeaking && !CIsListening && !isLoading) {
+      setAnimationIndex(3); // Return to default idle
+      startIdleAnimations();
+    }
+  }, [isProcessing, isSpeaking, CIsListening, isLoading]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -188,6 +210,8 @@ export const CharacterAnimationsProvider = (props) => {
         setIsLoading,
         isEndingListening,
         setIsEndingListening,
+        isProcessing,
+        setIsProcessing,
         scheduleNextAnimation
       }}
     >
