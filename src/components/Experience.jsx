@@ -1,20 +1,25 @@
 import React, { useRef, useEffect } from 'react';
 import { OrbitControls } from "@react-three/drei";
 import { useCharacterAnimations } from "../contexts/CharacterAnimations";
-import YuccaBerpikirR from "./YuccaBerpikirR";
-import YuccaEntrance from "./YuccaEntrance";
-import YuccaExit from "./YuccaExit";
-import YuccaIdleBiasa from "./YuccaIdleBiasa";
-import YuccaIdleLompat from "./YuccaIdleLompat";
-import YuccaMauMenjawab from "./YuccaMauMenjawab";
-import YuccaMendengarR from "./YuccaMendengarR";
-import YuccaMikir1 from "./YuccaMikir1";
-import YuccaMikir2 from "./YuccaMikir2";
-import YuccaNgantuk from "./YuccaNgantuk";
-import YuccaSedih from "./YuccaSedih";
-import YuccaSenang from "./YuccaSenang";
-import YuccaTungguSebentar_ver1 from "./YuccaTungguSebentar_ver1";
-import YuccaTungguSebentar_ver2 from "./YuccaTungguSebentar_ver2";
+import Yucca_facerig_NgomongLoopVER1 from './Yucca_facerig_NgomongLoopVER1';
+import Yucca_facerig_NgomongLoopVER2 from './Yucca_facerig_NgomongLoopVER2';
+import YuccaBerpikirR from './YuccaBerpikirR';
+import YuccaBerpikirRLoop from './YuccaBerpikirRLoop';
+import YuccaEntrance from './YuccaEntrance';
+import YuccaExit from './YuccaExit';
+import YuccaIdleBiasa from './YuccaIdleBiasa';
+import YuccaIdleLompat from './YuccaIdleLompat';
+import YuccaMauMenjawab from './YuccaMauMenjawab';
+import YuccaMendengarLoop from './YuccaMendengarLoop';
+import YuccaMendengarR from './YuccaMendengarR';
+import YuccaMikir1 from './YuccaMikir1';
+import YuccaMikir2 from './YuccaMikir2';
+import YuccaNgantuk from './YuccaNgantuk';
+import YuccaNgomong from './YuccaNgomong';
+import YuccaSedih from './YuccaSedih';
+import YuccaSenang from './YuccaSenang';
+import YuccaTungguSebentar_ver1 from './YuccaTungguSebentar_ver1';
+import YuccaTungguSebentar_ver2 from './YuccaTungguSebentar_ver2';
 
 const animationsMap = {
     0: YuccaEntrance,
@@ -31,6 +36,10 @@ const animationsMap = {
     11: YuccaSenang,
     12: YuccaTungguSebentar_ver1,
     13: YuccaTungguSebentar_ver2,
+    14: Yucca_facerig_NgomongLoopVER1,
+    15: Yucca_facerig_NgomongLoopVER2,
+    16: YuccaMendengarLoop,
+    17: YuccaNgomong,
 };
 
 const Experience = () => {
