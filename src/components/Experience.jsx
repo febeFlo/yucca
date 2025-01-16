@@ -62,9 +62,10 @@ const Experience = () => {
     // Update light position based on time
     useEffect(() => {
         const updateLightPosition = () => {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
+            // Dapatkan waktu Jakarta (UTC+7)
+            const jakartaTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+            const hours = jakartaTime.getHours();
+            const minutes = jakartaTime.getMinutes();
             
             // Untuk waktu yang lebih realistis:
             // - Jam 6 pagi: matahari dari timur (x positif)
@@ -82,25 +83,50 @@ const Experience = () => {
             const x = Math.cos(timeAngle) * radius;
             const z = Math.sin(timeAngle) * radius;
             
-            // Jika malam hari (18:00 - 06:00), kita set light ke posisi minimum
-            const y = hours >= 18 || hours < 6 ? 2 : Math.max(2, height);
+            // Sesuaikan waktu matahari terbit (5:30) dan terbenam (17:30) untuk Jakarta
+            const isSunrise = hours === 5 && minutes >= 30 || hours === 6 && minutes < 30;
+            const isSunset = hours === 17 && minutes >= 30 || hours === 18 && minutes < 30;
+            const isNight = hours >= 18 || hours < 5 || (hours === 5 && minutes < 30);
+            
+            // Sesuaikan y berdasarkan waktu
+            let y = isNight ? 2 : Math.max(2, height);
+            
+            // Sesuaikan intensitas untuk sunrise dan sunset
+            let intensity;
+            if (isNight) {
+                intensity = 0.3; // Malam hari
+            } else if (isSunrise) {
+                // Transisi halus saat matahari terbit
+                const sunriseProgress = (hours === 5) ? 
+                    (minutes - 30) / 60 : 
+                    (minutes + 30) / 60;
+                intensity = 0.3 + (0.9 * sunriseProgress);
+                y = 2 + (4 * sunriseProgress);
+            } else if (isSunset) {
+                // Transisi halus saat matahari terbenam
+                const sunsetProgress = (hours === 17) ? 
+                    (minutes - 30) / 60 : 
+                    (minutes + 30) / 60;
+                intensity = 1.2 - (0.9 * sunsetProgress);
+                y = 6 - (4 * sunsetProgress);
+            } else {
+                intensity = 1.2; // Siang hari
+            }
             
             if (lightRef.current) {
                 lightRef.current.position.set(x, y, z);
+                lightRef.current.intensity = intensity;
                 
-                // Sesuaikan intensitas berdasarkan waktu
-                const isDaytime = hours >= 6 && hours < 18;
-                lightRef.current.intensity = isDaytime ? 1.2 : 0.3;
-                
-                console.log(`Time: ${hours}:${minutes.toString().padStart(2, '0')}`);
+                console.log(`Jakarta Time: ${hours}:${minutes.toString().padStart(2, '0')}`);
                 console.log(`Light position:`, {x, y, z});
+                console.log(`Light intensity:`, intensity);
             }
         };
-
-        // Update setiap detik untuk testing
+    
+        // Update setiap detik
         updateLightPosition();
         const interval = setInterval(updateLightPosition, 1000);
-
+    
         return () => clearInterval(interval);
     }, []);
 

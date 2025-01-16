@@ -9,6 +9,26 @@ const LISTENING_CONFIG = {
   LOOP_DURATION: 3000      // Durasi satu cycle loop animation (ms)
 };
 
+const SPEAK_WAIT_AUDIO = [
+  '../../sounds/Yucca1.mp3',
+  '../../sounds/Yucca2.mp3',
+  '../../sounds/Yucca3.mp3',
+  '../../sounds/Yucca4.mp3',
+  '../../sounds/Yucca5.mp3',
+  '../../sounds/Yucca6.mp3',
+  '../../sounds/Yucca7.mp3',
+  '../../sounds/Yucca8.mp3',
+  '../../sounds/Yucca9.mp3',
+  '../../sounds/Yucca10.mp3',
+  '../../sounds/Yucca11.mp3',
+  '../../sounds/Yucca12.mp3',
+  '../../sounds/Yucca13.mp3',
+  '../../sounds/Yucca14.mp3',
+  '../../sounds/Yucca15.mp3',
+  '../../sounds/Yucca16.mp3',
+  '../../sounds/Yucca17.mp3',
+];
+
 const ANIMATION_DURATIONS = {
   ENTRANCE: 3000,
   IDLE_INTERVAL: 3000,
@@ -20,6 +40,7 @@ export const CharacterAnimationsProvider = (props) => {
   const [animations, setAnimations] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [CIsListening, setCIsListening] = useState(false);
+  const [isDoneThinking, setIsDoneThinking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEndingSequence, setIsEndingSequence] = useState(false);
@@ -28,13 +49,31 @@ export const CharacterAnimationsProvider = (props) => {
   const lastIndexesRef = useRef([]);
   const listeningSequenceRef = useRef(null);
   const [isEndingListening, setIsEndingListening] = useState(false);
+  let currentAudio = null;
+
   const entranceTimeoutRef = useRef(null);
   const initialAnimationPlayed = useRef(false);
   const [hasPlayedEntrance, setHasPlayedEntrance] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const idleAnimations = [3, 4, 9];
-  const thinkingAnimations = [1, 7, 8];
+  const thinkingAnimations = [
+    { index: 1, audio: '../../sounds/uhuk2.mp3' },
+    { index: 7, audio: '../../sounds/hemm2.mp3' },
+    { index: 8, audio: '../../sounds/hoo2.mp3' },
+  ];
+  const speakWait = [12, 13];
+
+
+  // const cancelScheduledAnimation = () => {
+  //   [timeoutRef, idleIntervalRef, listeningSequenceRef].forEach(ref => {
+  //     if (ref.current) {
+  //       clearTimeout(ref.current);
+  //       clearInterval(ref.current);
+  //       ref.current = null;
+  //     }
+  //   });
+  // };
 
   // useEffect(() => {
   //   if (!initialAnimationPlayed.current) {
@@ -55,15 +94,6 @@ export const CharacterAnimationsProvider = (props) => {
   //   }
   // }, []);
 
-  const cancelScheduledAnimation = () => {
-    [timeoutRef, idleIntervalRef, listeningSequenceRef, entranceTimeoutRef].forEach(ref => {
-      if (ref.current) {
-        clearTimeout(ref.current);
-        clearInterval(ref.current);
-        ref.current = null;
-      }
-    });
-  };
 
   const startEntranceSequence = () => {
     // Cancel any existing animations
@@ -128,16 +158,110 @@ export const CharacterAnimationsProvider = (props) => {
     }
   }, [CIsListening, isEndingListening]);
 
-  const startThinkingAnimations = () => {
-    // Clear any existing interval
+  const startThinkingAnimations = async () => {
+    // Clear any existing interval and audio
     cancelScheduledAnimation();
+    stopCurrentAudio();
 
-    // Randomly select from thinking animations every 2-3 seconds
-    idleIntervalRef.current = setInterval(() => {
-      const nextIndex = thinkingAnimations[Math.floor(Math.random() * thinkingAnimations.length)];
-      setAnimationIndex(nextIndex);
-    }, 2000 + Math.random() * 1000);
+    // Randomly select animation and audio
+    const selectedSpeakWait = speakWait[Math.floor(Math.random() * speakWait.length)];
+    const selectedAudio = SPEAK_WAIT_AUDIO[Math.floor(Math.random() * SPEAK_WAIT_AUDIO.length)];
+
+    setAnimationIndex(selectedSpeakWait);
+
+    // Tambahkan delay untuk memulai suara setelah animasi
+    const audioDelay = 300; // Delay dalam milidetik (1 detik)
+    await new Promise((resolve) => setTimeout(resolve, audioDelay));
+    // Create and setup audio
+    const audio = new Audio(selectedAudio);
+    currentAudioRef.current = audio;
+
+    // Promise that resolves when audio ends
+    const audioPromise = new Promise((resolve) => {
+      audio.addEventListener('ended', resolve);
+    });
+
+    audio.play().catch(console.error);
+
+    try {
+      // Wait for audio to complete
+      await audioPromise;
+
+      idleIntervalRef.current = setInterval(() => {
+
+        if (isLoading || isSpeaking || isEndingSequence || isDoneThinking ) {
+          stopCurrentAudio();
+          return;
+        }
+        // Pilih animasi berikutnya secara acak
+        const nextAnimation = thinkingAnimations[Math.floor(Math.random() * thinkingAnimations.length)];
+
+        // Hentikan audio sebelumnya jika ada
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0; // Reset audio ke awal
+        }
+
+        // Set animasi berdasarkan indeks
+        setAnimationIndex(nextAnimation.index);
+
+        // Mainkan audio yang sesuai dengan animasi
+        currentAudio = new Audio(nextAnimation.audio);
+        currentAudio.volume = 0.2;
+        currentAudio.play().catch((error) => {
+          console.error(`Error playing audio for animation ${nextAnimation.index}:`, error);
+        });
+      }, 3000 + Math.random() * 1000);
+    } catch (error) {
+      console.error('Error during animation sequence:', error);
+    }
   };
+
+  let currentAudioRef = useRef(null);
+
+  const stopCurrentAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+    }
+  };
+  
+
+  // Add cleanup to useEffect
+  useEffect(() => {
+    return () => {
+      stopCurrentAudio();
+      cancelScheduledAnimation();
+    };
+  }, []);
+
+  // Modify cancelScheduledAnimation to include audio cleanup
+  const cancelScheduledAnimation = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (idleIntervalRef.current) {
+      clearInterval(idleIntervalRef.current);
+      idleIntervalRef.current = null;
+    }
+    stopCurrentAudio();
+  };
+
+  // Optional: Add preloading for audio files
+  useEffect(() => {
+    SPEAK_WAIT_AUDIO.forEach(audioSrc => {
+      const audio = new Audio();
+      audio.preload = 'auto';
+      audio.src = audioSrc;
+    });
+  }, []);
 
   const startIdleAnimations = () => {
     if (!hasPlayedEntrance) return;
@@ -231,6 +355,7 @@ export const CharacterAnimationsProvider = (props) => {
   // Handle speaking state
   useEffect(() => {
     if (isSpeaking) {
+      stopCurrentAudio();
       stopIdleAnimations();
       setAnimationIndex(15);
       lastIndexesRef.current = [];
@@ -239,6 +364,41 @@ export const CharacterAnimationsProvider = (props) => {
       startIdleAnimations();
     }
   }, [isSpeaking]);
+
+  useEffect(() => {
+    if (isDoneThinking) {
+      stopCurrentAudio();
+      stopIdleAnimations();
+      cancelScheduledAnimation();
+      playWithAnimation(5, '../../sounds/aha4.mp3', () => {
+        console.log('Animation 5 completed');
+      });
+    } else if (!isSpeaking && !CIsListening && !isLoading) {
+      setAnimationIndex(3); // Return to default idle
+      startIdleAnimations();
+    }
+  }, [isDoneThinking]);
+
+  const playWithAnimation = async (animationIndex, audioFile, callback) => {
+    const audio = new Audio(audioFile);
+    try {
+      await audio.play();
+    } catch (error) {
+      console.error('Error playing audio:', error);
+    }
+    setAnimationIndex(animationIndex);
+
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+
+    if (callback) callback();
+
+    setIsDoneThinking(false);
+  };
+
+
+
 
   useEffect(() => {
     if (isLoading) {
@@ -294,7 +454,11 @@ export const CharacterAnimationsProvider = (props) => {
         isEndingListening,
         setIsEndingListening,
         isProcessing,
+        isDoneThinking,
+        setIsDoneThinking,
         setIsProcessing,
+        playWithAnimation,
+        
         scheduleNextAnimation,
         hasPlayedEntrance, // Added to provider value
         startEntranceSequence 
