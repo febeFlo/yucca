@@ -39,7 +39,25 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
       recog.lang = "id-ID";
-      recog.continuous = true;
+      recog.continuous = false; 
+
+      recog.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0].transcript)
+          .join("");
+        setInputText(transcript);
+      };
+
+      recog.onend = () => {
+        setIsListening(false); 
+      };
+
+      recog.onerror = (error) => {
+        console.error('Speech Recognition error:', error);
+        setErrorMessage('Speech recognition failed.');
+        setIsListening(false);
+      };
+
       return recog;
     }
     return null;
@@ -61,21 +79,24 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   }, [recognition, isListening]);
 
   const handleMicToggle = () => {
-    if (isListening) {
-      recognition?.stop();
-      setIsListening(false);
-      setCIsListening(false);
-      
-      // Reset ke animasi idle setelah selesai mendengar
-      setAnimationIndex(3); // atau index idle animation lainnya
+    if (recognition) {
+      if (isListening) {
+        recognition.stop();
+        setIsListening(false);
+        if (inputText.trim()) {
+          handleSend(inputText);
+          setInputText("");
+        }
+      } else {
+        recognition.start();
+        setIsListening(true);
+        setErrorMessage("");
+      }
     } else {
-      recognition?.start();
-      setIsListening(true);
-      setCIsListening(true);
-      // Set ke index YuccaMendengar
-      setAnimationIndex(6); // sesuaikan dengan index YuccaMendengar di animationsMap
+      setErrorMessage("Pengenalan suara tidak didukung di browser Anda.");
     }
   };
+
 
   const playAudio = (base64Audio) => {
     if (audioElement) {
