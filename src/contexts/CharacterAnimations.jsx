@@ -9,8 +9,14 @@ const LISTENING_CONFIG = {
   LOOP_DURATION: 3000      // Durasi satu cycle loop animation (ms)
 };
 
+const ANIMATION_DURATIONS = {
+  ENTRANCE: 3000,
+  IDLE_INTERVAL: 3000,
+  TRANSITION: 500
+};
+
 export const CharacterAnimationsProvider = (props) => {
-  const [animationIndex, setAnimationIndex] = useState(3);
+  const [animationIndex, setAnimationIndex] = useState(0);
   const [animations, setAnimations] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [CIsListening, setCIsListening] = useState(false);
@@ -22,18 +28,69 @@ export const CharacterAnimationsProvider = (props) => {
   const lastIndexesRef = useRef([]);
   const listeningSequenceRef = useRef(null);
   const [isEndingListening, setIsEndingListening] = useState(false);
+  const entranceTimeoutRef = useRef(null);
+  const initialAnimationPlayed = useRef(false);
+  const [hasPlayedEntrance, setHasPlayedEntrance] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const idleAnimations = [3, 4, 9];
   const thinkingAnimations = [1, 7, 8];
 
+  // useEffect(() => {
+  //   if (!initialAnimationPlayed.current) {
+  //     initialAnimationPlayed.current = true;
+  //     setAnimationIndex(0); // Set to entrance animation
+
+  //     // Schedule transition to idle after entrance animation
+  //     entranceTimeoutRef.current = setTimeout(() => {
+  //       setAnimationIndex(3); // Switch to idle after entrance
+  //       startIdleAnimations(); // Start idle animation cycle
+  //     }, 3000); // Adjust timing based on entrance animation duration
+
+  //     return () => {
+  //       if (entranceTimeoutRef.current) {
+  //         clearTimeout(entranceTimeoutRef.current);
+  //       }
+  //     };
+  //   }
+  // }, []);
+
   const cancelScheduledAnimation = () => {
-    [timeoutRef, idleIntervalRef, listeningSequenceRef].forEach(ref => {
+    [timeoutRef, idleIntervalRef, listeningSequenceRef, entranceTimeoutRef].forEach(ref => {
       if (ref.current) {
         clearTimeout(ref.current);
         clearInterval(ref.current);
         ref.current = null;
       }
     });
+  };
+
+  const startEntranceSequence = () => {
+    // Cancel any existing animations
+    cancelScheduledAnimation();
+    
+    // Set to entrance animation (index 0)
+    setAnimationIndex(0);
+    
+    // Play entrance audio
+    const entranceAudio = new Audio('/audio/entrance.mp3');
+    entranceAudio.play().catch(error => {
+      console.log('Failed to play entrance audio:', error);
+    });
+    
+    // First timeout: Wait for entrance animation to complete
+    entranceTimeoutRef.current = setTimeout(() => {
+      // Set transition state
+      setAnimationIndex(0); // Keep entrance animation during transition
+      
+      // Second timeout: Transition to idle
+      setTimeout(() => {
+        setHasPlayedEntrance(true);
+        setAnimationIndex(3); // Switch to idle
+        startIdleAnimations(); // Start idle cycle
+      }, ANIMATION_DURATIONS.ENTRANCE_TO_IDLE);
+      
+    }, ANIMATION_DURATIONS.ENTRANCE);
   };
 
   const startListeningSequence = () => {
@@ -83,37 +140,64 @@ export const CharacterAnimationsProvider = (props) => {
   };
 
   const startIdleAnimations = () => {
-    if (idleIntervalRef.current) {
-      clearInterval(idleIntervalRef.current);
-    }
+    if (!hasPlayedEntrance) return;
+    
+    cancelScheduledAnimation();
 
-    idleIntervalRef.current = setInterval(() => {
-      if (!CIsListening && !isEndingSequence) {
-        const availableAnimations = idleAnimations.filter(
-          index => index !== animationIndex && !lastIndexesRef.current.includes(index)
-        );
+    // Add initial delay before starting idle animations
+    setTimeout(() => {
+      idleIntervalRef.current = setInterval(() => {
+        if (!CIsListening && !isEndingSequence && !isSpeaking && !isLoading) {
+          const availableAnimations = idleAnimations.filter(
+            index => index !== animationIndex && !lastIndexesRef.current.includes(index)
+          );
 
-        let nextIndex;
-        if (availableAnimations.length === 0) {
-          lastIndexesRef.current = [animationIndex];
-          nextIndex = idleAnimations.find(index => index !== animationIndex);
-        } else {
-          nextIndex = availableAnimations[Math.floor(Math.random() * availableAnimations.length)];
+          let nextIndex;
+          if (availableAnimations.length === 0) {
+            lastIndexesRef.current = [animationIndex];
+            nextIndex = idleAnimations.find(index => index !== animationIndex);
+          } else {
+            nextIndex = availableAnimations[Math.floor(Math.random() * availableAnimations.length)];
+          }
+
+          // Add fade transition between idle animations
+          const currentIndex = animationIndex;
+          setTimeout(() => {
+            if (currentIndex === animationIndex) { // Only update if no other animation has taken over
+              setAnimationIndex(nextIndex);
+              lastIndexesRef.current.push(nextIndex);
+              if (lastIndexesRef.current.length > 2) {
+                lastIndexesRef.current.shift();
+              }
+            }
+          }, ANIMATION_DURATIONS.TRANSITION);
+
         }
-
-        lastIndexesRef.current.push(nextIndex);
-        if (lastIndexesRef.current.length > 2) {
-          lastIndexesRef.current.shift();
-        }
-
-        setAnimationIndex(nextIndex);
-      }
-    }, 3000);
+      }, ANIMATION_DURATIONS.IDLE_INTERVAL);
+    }, ANIMATION_DURATIONS.TRANSITION);
   };
 
   const stopIdleAnimations = () => {
     cancelScheduledAnimation();
   };
+
+  useEffect(() => {
+    if (!hasPlayedEntrance) {
+      startEntranceSequence();
+    }
+    
+    return () => {
+      cancelScheduledAnimation();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isSpeaking || CIsListening || isLoading || isProcessing) {
+      cancelScheduledAnimation();
+    } else if (hasPlayedEntrance) {
+      startIdleAnimations();
+    }
+  }, [isSpeaking, CIsListening, isLoading, isProcessing, hasPlayedEntrance]);
 
   // Schedule next animation if in idle state
   const scheduleNextAnimation = useCallback((currentAnimationDuration = 3000) => {
@@ -150,19 +234,18 @@ export const CharacterAnimationsProvider = (props) => {
       stopIdleAnimations();
       setAnimationIndex(15);
       lastIndexesRef.current = [];
-    } else if (!CIsListening && !isLoading) {
+    } else if (!CIsListening && !isLoading && initialAnimationPlayed.current) {
       setAnimationIndex(3);
       startIdleAnimations();
     }
   }, [isSpeaking]);
 
-  // Handle loading state
   useEffect(() => {
     if (isLoading) {
       stopIdleAnimations();
       setAnimationIndex(10);
       lastIndexesRef.current = [];
-    } else if (!CIsListening && !isSpeaking) {
+    } else if (!CIsListening && !isSpeaking && initialAnimationPlayed.current) {
       setAnimationIndex(3);
       startIdleAnimations();
     }
@@ -171,8 +254,8 @@ export const CharacterAnimationsProvider = (props) => {
   useEffect(() => {
     if (isProcessing) {
       startThinkingAnimations();
-    } else if (!isSpeaking && !CIsListening && !isLoading) {
-      setAnimationIndex(3); // Return to default idle
+    } else if (!isSpeaking && !CIsListening && !isLoading && initialAnimationPlayed.current) {
+      setAnimationIndex(3);
       startIdleAnimations();
     }
   }, [isProcessing, isSpeaking, CIsListening, isLoading]);
@@ -212,7 +295,9 @@ export const CharacterAnimationsProvider = (props) => {
         setIsEndingListening,
         isProcessing,
         setIsProcessing,
-        scheduleNextAnimation
+        scheduleNextAnimation,
+        hasPlayedEntrance, // Added to provider value
+        startEntranceSequence 
       }}
     >
       {props.children}
