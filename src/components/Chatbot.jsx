@@ -14,7 +14,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { setAnimationIndex } = useCharacterAnimations();
-  const { setCIsListening, setIsProcessing, setIsEndingListening } = useCharacterAnimations();
+  const { setCIsListening, setIsProcessing, setIsEndingListening, setIsDoneThinking, playWithAnimation } = useCharacterAnimations();
 
 
   useEffect(() => {
@@ -109,26 +109,30 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
       setErrorMessage("Input cannot be empty!");
       return;
     }
-
+  
     setErrorMessage("");
     setIsLoading(true);
     setIsProcessing(true);
+  
     try {
       const response = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: messageText }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
       }
-
+  
       const data = await response.json();
-
+  
       if (!data.response || !data.response.text || !data.response.voice) {
         throw new Error("Invalid response format from server");
       }
+  
+      setIsDoneThinking(true);
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Adjust duration if necessary
 
       setResponses((prev) => [
         ...prev,
@@ -139,9 +143,10 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
           timestamp: new Date().toLocaleString(),
         },
       ]);
-
+  
+      // Play audio after animation and response update
       playAudio(data.response.voice);
-
+  
       if (!textOverride) {
         setInputText("");
       }
@@ -152,6 +157,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
       setIsProcessing(false);
     }
   };
+  
 
   const handleReset = () => {
     setResponses([]);
