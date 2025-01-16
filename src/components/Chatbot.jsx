@@ -13,6 +13,9 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   const { setIsSpeaking } = useCharacterAnimations();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { setAnimationIndex } = useCharacterAnimations();
+  const { setCIsListening } = useCharacterAnimations();
+
 
   useEffect(() => {
     const checkMobile = () => {
@@ -61,9 +64,16 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
     if (isListening) {
       recognition?.stop();
       setIsListening(false);
+      setCIsListening(false);
+      
+      // Reset ke animasi idle setelah selesai mendengar
+      setAnimationIndex(3); // atau index idle animation lainnya
     } else {
       recognition?.start();
       setIsListening(true);
+      setCIsListening(true);
+      // Set ke index YuccaMendengar
+      setAnimationIndex(6); // sesuaikan dengan index YuccaMendengar di animationsMap
     }
   };
 
