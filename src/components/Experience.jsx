@@ -15,6 +15,7 @@ import YuccaSedih from "./YuccaSedih";
 import YuccaSenang from "./YuccaSenang";
 import YuccaTungguSebentar_ver1 from "./YuccaTungguSebentar_ver1";
 import YuccaTungguSebentar_ver2 from "./YuccaTungguSebentar_ver2";
+import YuccaMendengarLoop from "./YuccaMendengarLoop";
 
 const animationsMap = {
     0: YuccaEntrance,
@@ -31,6 +32,7 @@ const animationsMap = {
     11: YuccaSenang,
     12: YuccaTungguSebentar_ver1,
     13: YuccaTungguSebentar_ver2,
+    14: YuccaMendengarLoop,
 };
 
 const Experience = () => {

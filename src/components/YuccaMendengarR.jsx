@@ -18,6 +18,7 @@ const YuccaMendengarR = (props) => {
   const { nodes, materials } = useGraph(clone);
   const { actions } = useAnimations(animations, group);
   const activeActionRef = useRef(null);
+  const { isEndingListening } = useCharacterAnimations();
 
   useEffect(() => {
     const availableActions = Object.values(actions);
@@ -31,14 +32,29 @@ const YuccaMendengarR = (props) => {
         // Stop current animation with fadeout if exists
         if (activeActionRef.current && activeActionRef.current !== action) {
           activeActionRef.current.fadeOut(TRANSITION_DURATION);
+          activeActionRef.current.stop();
         }
 
-        // Setup and play new animation
-        action.reset()
-             .setLoop(true)
-             .setEffectiveTimeScale(1)
-             .fadeIn(TRANSITION_DURATION)
-             .play();
+        if (isEndingListening) {
+          // Set starting time to 75% through the animation
+          const startTime = duration * 0.75;
+          action.reset()
+               .setLoop(1)
+               .setEffectiveTimeScale(1)
+          
+          // Explicitly set the time after other settings
+          action.time = startTime;
+          action.clampWhenFinished = true;
+          action.play();
+          
+          console.log('Playing ending sequence from:', startTime);
+        } else {
+          // Normal play from start
+          action.reset()
+               .setLoop(1)
+               .setEffectiveTimeScale(1)
+               .play();
+        }
 
         activeActionRef.current = action;
       }
@@ -54,7 +70,7 @@ const YuccaMendengarR = (props) => {
         }, TRANSITION_DURATION * 1000);
       }
     };
-  }, [actions]);
+  }, [actions, isEndingListening]);
 
   return (
     <group ref={group} {...props} dispose={null}>

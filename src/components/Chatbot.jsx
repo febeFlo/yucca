@@ -14,7 +14,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { setAnimationIndex } = useCharacterAnimations();
-  const { setCIsListening } = useCharacterAnimations();
+  const { setCIsListening, setIsEndingListening } = useCharacterAnimations();
 
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
     if (isListening) {
       recognition?.stop();
       setIsListening(false);
-      setCIsListening(false);
+      setIsEndingListening(true);
       
       // Reset ke animasi idle setelah selesai mendengar
       setAnimationIndex(3); // atau index idle animation lainnya
