@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { InteractivePage } from './components/InteractivePage';
 import { InteractiveButton } from './components/InteractiveButton';
 import { CharacterAnimationsProvider, useCharacterAnimations } from "./contexts/CharacterAnimations";
+import VirtualTour from "./components/VirtualTour";
 
 const MainContent = ({ isDarkMode, toggleTheme }) => {
   const { setAnimationIndex } = useCharacterAnimations();
@@ -119,6 +120,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<MainContent isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/interactive" element={<InteractivePage isDarkMode={isDarkMode} />} />
+          <Route path="/virtual" element={<VirtualTour />} />
         </Routes>
       </CharacterAnimationsProvider>
     </Router>

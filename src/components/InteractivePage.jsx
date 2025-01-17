@@ -117,15 +117,15 @@ export const InteractivePage = ({ isDarkMode }) => {
         throw new Error(`Server error: ${response.status}`);
       }
   
+      setIsProcessing(false);
       const data = await response.json();
   
       if (!data.response || !data.response.text || !data.response.voice) {
         throw new Error("Invalid response format from server");
       }
   
-      setIsProcessing(false);
       setIsDoneThinking(true);
-      await new Promise((resolve) => setTimeout(resolve, 3000)); // Adjust duration if necessary
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       playAudio(data.response.voice);
       if (!textOverride) {

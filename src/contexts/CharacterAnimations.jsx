@@ -290,7 +290,6 @@ export const CharacterAnimationsProvider = (props) => {
       });
       stopCurrentAudio();
     } else if (!isSpeaking && !CIsListening && !isLoading) {
-      stopCurrentAudio();
       setAnimationIndex(3); // Return to default idle
       startIdleAnimations();
     }
@@ -310,7 +309,7 @@ export const CharacterAnimationsProvider = (props) => {
 
 
     if (callback) callback();
-
+    stopCurrentAudio();
     setIsDoneThinking(false);
   };
 

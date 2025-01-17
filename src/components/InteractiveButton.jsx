@@ -14,5 +14,6 @@ export const InteractiveButton = () => {
         <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm">Bicara dengan Yucca</p>
       </div>
     </Link>
+    
   );
 };
