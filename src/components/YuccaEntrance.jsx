@@ -5,7 +5,6 @@ import { SkeletonUtils } from 'three-stdlib';
 import { useCharacterAnimations } from '../contexts/CharacterAnimations';
 
 const TRANSITION_DURATION = 0.5;
-const ENTRANCE_AUDIO = '/audio/entrance.mp3';
 
 const YuccaEntrance = (props) => {
   const group = useRef();
@@ -14,11 +13,11 @@ const YuccaEntrance = (props) => {
   const { nodes, materials } = useGraph(clone);
   const { actions } = useAnimations(animations, group);
   const activeActionRef = useRef(null);
-  const { scheduleNextAnimation, setIsSpeaking, setAnimationIndex } = useCharacterAnimations();
+  const { scheduleNextAnimation, setAnimationIndex } = useCharacterAnimations();
   const hasPlayedRef = useRef(false);
 
   useEffect(() => {
-    const playEntranceSequence = async () => {
+    const playEntranceSequence = () => {
       if (hasPlayedRef.current) return;
       hasPlayedRef.current = true;
 
@@ -46,31 +45,11 @@ const YuccaEntrance = (props) => {
 
           activeActionRef.current = action;
 
-          // Play entrance audio
-          try {
-            setIsSpeaking(true);
-            const audio = new Audio(ENTRANCE_AUDIO);
-            await audio.play();
-            
-            // Transition to idle after both animation and audio complete
-            const totalDuration = Math.max(duration * 1000, audio.duration * 1000);
-            
-            setTimeout(() => {
-              setIsSpeaking(false);
-              setAnimationIndex(3); // Switch to idle animation
-              scheduleNextAnimation(duration * 1000);
-            }, totalDuration);
-            
-          } catch (error) {
-            console.error('Failed to play entrance audio:', error);
-            setIsSpeaking(false);
-            
-            // Still transition to idle after animation if audio fails
-            setTimeout(() => {
-              setAnimationIndex(3);
-              scheduleNextAnimation(duration * 1000);
-            }, duration * 1000);
-          }
+          // Transition to idle after animation completes
+          setTimeout(() => {
+            setAnimationIndex(3); // Switch to idle animation
+            scheduleNextAnimation(duration * 1000);
+          }, duration * 1000);
         }
       }
     };
@@ -83,7 +62,7 @@ const YuccaEntrance = (props) => {
         activeActionRef.current.stop();
       }
     };
-  }, [actions, scheduleNextAnimation, setAnimationIndex, setIsSpeaking]);
+  }, [actions, scheduleNextAnimation, setAnimationIndex]);
 
   return (
     <group ref={group} {...props} dispose={null}>

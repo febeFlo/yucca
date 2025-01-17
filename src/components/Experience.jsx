@@ -50,15 +50,6 @@ const Experience = () => {
 
     console.log('Current animation index:', animationIndex);
         
-    useEffect(() => {
-        if (!hasPlayedEntranceRef.current) {
-            const entranceAudio = new Audio('../../public/audio/entrance.mp3');
-            entranceAudio.play().catch(error => {
-                console.error('Failed to play entrance audio:', error);
-            });
-            hasPlayedEntranceRef.current = true;
-        }
-    }, []);
     // Update light position based on time
     useEffect(() => {
         const updateLightPosition = () => {

@@ -16,13 +16,23 @@ const MainContent = ({ isDarkMode, toggleTheme }) => {
     // Set initial animation to entrance (index 0)
     setAnimationIndex(0);
     
+    // Play sound with delay
+    const soundTimer = setTimeout(() => {
+        const audio = new Audio('../../sounds/Entrance2.mp3'); // Ganti dengan path file suara Anda
+        audio.play();
+    }, 4000); // Delay 1 detik sebelum suara diputar
+    
     // After entrance animation duration, switch to idle
     const entranceTimer = setTimeout(() => {
-      setAnimationIndex(3); // Switch to idle animation
-    }, 3000); // Match this with your entrance animation duration
+        setAnimationIndex(0); // Switch to idle animation
+    }, 0); // Match this with your entrance animation duration
     
-    return () => clearTimeout(entranceTimer);
-  }, [setAnimationIndex]);
+    // Cleanup timers
+    return () => {
+        clearTimeout(entranceTimer);
+        clearTimeout(soundTimer);
+    };
+}, [setAnimationIndex]);
 
   return (
     <div className="h-screen bg-orange-50 dark:bg-gray-900 transition-colors flex flex-col md:grid md:grid-cols-2">

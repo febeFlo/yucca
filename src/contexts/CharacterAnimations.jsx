@@ -9,12 +9,6 @@ const LISTENING_CONFIG = {
   LOOP_DURATION: 3000      // Durasi satu cycle loop animation (ms)
 };
 
-const ANIMATION_DURATIONS = {
-  ENTRANCE: 3000,
-  IDLE_INTERVAL: 3000,
-  TRANSITION: 500
-};
-
 const SPEAK_WAIT_AUDIO = [
   '../../sounds/Yucca1.mp3',
   '../../sounds/Yucca2.mp3',
@@ -36,7 +30,7 @@ const SPEAK_WAIT_AUDIO = [
 ];
 
 export const CharacterAnimationsProvider = (props) => {
-  const [animationIndex, setAnimationIndex] = useState(0);
+  const [animationIndex, setAnimationIndex] = useState(3);
   const [animations, setAnimations] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [CIsListening, setCIsListening] = useState(false);
@@ -49,16 +43,27 @@ export const CharacterAnimationsProvider = (props) => {
   const lastIndexesRef = useRef([]);
   const listeningSequenceRef = useRef(null);
   const [isEndingListening, setIsEndingListening] = useState(false);
-  const entranceTimeoutRef = useRef(null);
-  const initialAnimationPlayed = useRef(false);
-  const [hasPlayedEntrance, setHasPlayedEntrance] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
   let currentAudio = null;
 
 
   const idleAnimations = [3, 4, 9];
-  const thinkingAnimations = [1, 7, 8];
+  const thinkingAnimations = [
+    { index: 1, audio: '../../sounds/uhuk2.mp3' },
+    { index: 7, audio: '../../sounds/hemm2.mp3' },
+    { index: 8, audio: '../../sounds/hoo2.mp3' },
+  ];
+  const speakWait = [12, 13];
 
+
+  // const cancelScheduledAnimation = () => {
+  //   [timeoutRef, idleIntervalRef, listeningSequenceRef].forEach(ref => {
+  //     if (ref.current) {
+  //       clearTimeout(ref.current);
+  //       clearInterval(ref.current);
+  //       ref.current = null;
+  //     }
+  //   });
+  // };
 
   const startListeningSequence = () => {
     setAnimationIndex(6); // Start MendengarR
@@ -201,64 +206,37 @@ export const CharacterAnimationsProvider = (props) => {
   }, []);
 
   const startIdleAnimations = () => {
-    if (!hasPlayedEntrance) return;
-    
-    cancelScheduledAnimation();
+    if (idleIntervalRef.current) {
+      clearInterval(idleIntervalRef.current);
+    }
 
-    // Add initial delay before starting idle animations
-    setTimeout(() => {
-      idleIntervalRef.current = setInterval(() => {
-        if (!CIsListening && !isEndingSequence && !isSpeaking && !isLoading) {
-          const availableAnimations = idleAnimations.filter(
-            index => index !== animationIndex && !lastIndexesRef.current.includes(index)
-          );
+    idleIntervalRef.current = setInterval(() => {
+      if (!CIsListening && !isEndingSequence) {
+        const availableAnimations = idleAnimations.filter(
+          index => index !== animationIndex && !lastIndexesRef.current.includes(index)
+        );
 
-          let nextIndex;
-          if (availableAnimations.length === 0) {
-            lastIndexesRef.current = [animationIndex];
-            nextIndex = idleAnimations.find(index => index !== animationIndex);
-          } else {
-            nextIndex = availableAnimations[Math.floor(Math.random() * availableAnimations.length)];
-          }
-
-          // Add fade transition between idle animations
-          const currentIndex = animationIndex;
-          setTimeout(() => {
-            if (currentIndex === animationIndex) { // Only update if no other animation has taken over
-              setAnimationIndex(nextIndex);
-              lastIndexesRef.current.push(nextIndex);
-              if (lastIndexesRef.current.length > 2) {
-                lastIndexesRef.current.shift();
-              }
-            }
-          }, ANIMATION_DURATIONS.TRANSITION);
-
+        let nextIndex;
+        if (availableAnimations.length === 0) {
+          lastIndexesRef.current = [animationIndex];
+          nextIndex = idleAnimations.find(index => index !== animationIndex);
+        } else {
+          nextIndex = availableAnimations[Math.floor(Math.random() * availableAnimations.length)];
         }
-      }, ANIMATION_DURATIONS.IDLE_INTERVAL);
-    }, ANIMATION_DURATIONS.TRANSITION);
+
+        lastIndexesRef.current.push(nextIndex);
+        if (lastIndexesRef.current.length > 2) {
+          lastIndexesRef.current.shift();
+        }
+
+        setAnimationIndex(nextIndex);
+      }
+    }, 3000);
   };
 
   const stopIdleAnimations = () => {
     cancelScheduledAnimation();
   };
-
-  useEffect(() => {
-    if (!hasPlayedEntrance) {
-      startEntranceSequence();
-    }
-    
-    return () => {
-      cancelScheduledAnimation();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isSpeaking || CIsListening || isLoading || isProcessing) {
-      cancelScheduledAnimation();
-    } else if (hasPlayedEntrance) {
-      startIdleAnimations();
-    }
-  }, [isSpeaking, CIsListening, isLoading, isProcessing, hasPlayedEntrance]);
 
   // Schedule next animation if in idle state
   const scheduleNextAnimation = useCallback((currentAnimationDuration = 3000) => {
@@ -296,7 +274,7 @@ export const CharacterAnimationsProvider = (props) => {
       stopIdleAnimations();
       setAnimationIndex(15);
       lastIndexesRef.current = [];
-    } else if (!CIsListening && !isLoading && initialAnimationPlayed.current) {
+    } else if (!CIsListening && !isLoading) {
       setAnimationIndex(3);
       startIdleAnimations();
     }
@@ -310,7 +288,9 @@ export const CharacterAnimationsProvider = (props) => {
       playWithAnimation(5, '../../sounds/aha4.mp3', () => {
         console.log('Animation 5 completed');
       });
+      stopCurrentAudio();
     } else if (!isSpeaking && !CIsListening && !isLoading) {
+      stopCurrentAudio();
       setAnimationIndex(3); // Return to default idle
       startIdleAnimations();
     }
@@ -335,14 +315,14 @@ export const CharacterAnimationsProvider = (props) => {
   };
 
 
-
-
+  // Handle loading state
   useEffect(() => {
     if (isLoading) {
+      stopCurrentAudio();
       stopIdleAnimations();
       setAnimationIndex(10);
       lastIndexesRef.current = [];
-    } else if (!CIsListening && !isSpeaking && initialAnimationPlayed.current) {
+    } else if (!CIsListening && !isSpeaking) {
       setAnimationIndex(3);
       startIdleAnimations();
     }
@@ -350,9 +330,11 @@ export const CharacterAnimationsProvider = (props) => {
 
   useEffect(() => {
     if (isProcessing) {
+      stopCurrentAudio();
       startThinkingAnimations();
-    } else if (!isSpeaking && !CIsListening && !isLoading && initialAnimationPlayed.current) {
-      setAnimationIndex(3);
+    } else if (!isSpeaking && !CIsListening && !isLoading) {
+      stopCurrentAudio();
+      setAnimationIndex(3); // Return to default idle
       startIdleAnimations();
     }
   }, [isProcessing, isSpeaking, CIsListening, isLoading]);
@@ -366,6 +348,7 @@ export const CharacterAnimationsProvider = (props) => {
 
   useEffect(() => {
     if (CIsListening) {
+      stopCurrentAudio();
       stopIdleAnimations();
       if (!isEndingListening) {
         startListeningSequence();
@@ -395,8 +378,7 @@ export const CharacterAnimationsProvider = (props) => {
         setIsDoneThinking,
         setIsProcessing,
         playWithAnimation,
-        scheduleNextAnimation,
-        startEntranceSequence 
+        scheduleNextAnimation
       }}
     >
       {props.children}

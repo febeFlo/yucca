@@ -39,25 +39,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
       recog.lang = "id-ID";
-      recog.continuous = false; 
-
-      recog.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join("");
-        setInputText(transcript);
-      };
-
-      recog.onend = () => {
-        setIsListening(false); 
-      };
-
-      recog.onerror = (error) => {
-        console.error('Speech Recognition error:', error);
-        setErrorMessage('Speech recognition failed.');
-        setIsListening(false);
-      };
-
+      recog.continuous = true;
       return recog;
     }
     return null;
@@ -79,24 +61,25 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
   }, [recognition, isListening]);
 
   const handleMicToggle = () => {
-    if (recognition) {
-      if (isListening) {
-        recognition.stop();
-        setIsListening(false);
-        if (inputText.trim()) {
-          handleSend(inputText);
-          setInputText("");
-        }
-      } else {
-        recognition.start();
-        setIsListening(true);
-        setErrorMessage("");
+    if (isListening) {
+      recognition?.stop();
+      setIsListening(false);
+      setIsEndingListening(true);
+      if (inputText.trim()) {
+        handleSend(inputText);
+        setInputText("");
       }
+      // Reset ke animasi idle setelah selesai mendengar
+      setAnimationIndex(3); // atau index idle animation lainnya
     } else {
-      setErrorMessage("Pengenalan suara tidak didukung di browser Anda.");
+      recognition?.start();
+      setIsListening(true);
+      setCIsListening(true);
+      setErrorMessage("");
+      // Set ke index YuccaMendengar
+      setAnimationIndex(6); // sesuaikan dengan index YuccaMendengar di animationsMap
     }
   };
-
 
   const playAudio = (base64Audio) => {
     if (audioElement) {
@@ -130,28 +113,29 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
       setErrorMessage("Input cannot be empty!");
       return;
     }
-  
+
     setErrorMessage("");
     setIsLoading(true);
     setIsProcessing(true);
-  
+
     try {
       const response = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: messageText }),
       });
-  
+      
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
       }
-  
+      setIsProcessing(false);
+
       const data = await response.json();
-  
+
       if (!data.response || !data.response.text || !data.response.voice) {
         throw new Error("Invalid response format from server");
       }
-  
+
       setIsDoneThinking(true);
       await new Promise((resolve) => setTimeout(resolve, 3000)); // Adjust duration if necessary
 
@@ -164,10 +148,10 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
           timestamp: new Date().toLocaleString(),
         },
       ]);
-  
+
       // Play audio after animation and response update
       playAudio(data.response.voice);
-  
+
       if (!textOverride) {
         setInputText("");
       }
@@ -178,7 +162,7 @@ const Chatbot = ({ isDarkMode, toggleTheme }) => {
       setIsProcessing(false);
     }
   };
-  
+
 
   const handleReset = () => {
     setResponses([]);

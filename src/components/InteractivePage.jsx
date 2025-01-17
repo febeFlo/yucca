@@ -3,19 +3,29 @@ import { Link } from 'react-router-dom';
 import { Canvas } from "@react-three/fiber";
 import Experience from './Experience';
 import { MantineProvider } from "@mantine/core";
+import { useCharacterAnimations } from '../contexts/CharacterAnimations';
+
 
 export const InteractivePage = ({ isDarkMode }) => {
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [audioElement, setAudioElement] = useState(null);
+  const [inputText, setInputText] = useState("");
+  const [responses, setResponses] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [audioElement, setAudioElement] = useState(null);
+  const { setIsSpeaking } = useCharacterAnimations();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const { setAnimationIndex } = useCharacterAnimations();
+  const { setCIsListening, setIsProcessing, setIsEndingListening, setIsDoneThinking, playWithAnimation } = useCharacterAnimations();
+
 
   const recognition = useMemo(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
       recog.lang = "id-ID";
-      recog.continuous = false; // Changed to false to auto-stop after silence
+      recog.continuous = false; // Ubah ke false agar berhenti setelah jeda
       recog.interimResults = false;
       return recog;
     }
@@ -24,28 +34,43 @@ export const InteractivePage = ({ isDarkMode }) => {
 
   useEffect(() => {
     if (recognition) {
-      recognition.onresult = async (event) => {
+      recognition.onresult = (event) => {
         const transcript = Array.from(event.results)
           .map((result) => result[0].transcript)
           .join("");
-        
-        // Automatically send the message when we get a result
+        // Langsung handle send saat mendapat hasil
         handleSend(transcript);
       };
-
+  
       recognition.onend = () => {
         setIsListening(false);
+        setCIsListening(false);
+      };
+  
+      recognition.onerror = (error) => {
+        console.error('Speech Recognition error:', error);
+        setErrorMessage('Speech recognition failed.');
+        setIsListening(false);
+        setCIsListening(false);
       };
     }
   }, [recognition]);
 
   const handleMicToggle = () => {
-    if (isListening) {
-      recognition?.stop();
-      setIsListening(false);
+    if (recognition) {
+      if (isListening) {
+        recognition.stop();
+        setIsListening(false);
+        setCIsListening(false);
+        setIsEndingListening(true);
+      } else {
+        recognition.start();
+        setIsListening(true);
+        setCIsListening(true);
+        setErrorMessage("");
+      }
     } else {
-      recognition?.start();
-      setIsListening(true);
+      setErrorMessage("Pengenalan suara tidak didukung di browser Anda.");
     }
   };
 
@@ -70,33 +95,47 @@ export const InteractivePage = ({ isDarkMode }) => {
     });
   };
 
-  const handleSend = async (message) => {
-    if (!message.trim()) {
-      setErrorMessage("No speech detected!");
+  const handleSend = async (textOverride) => {
+    const messageText = textOverride;
+    if (!messageText.trim()) {
+      setErrorMessage("Input cannot be empty!");
       return;
     }
-
+  
     setErrorMessage("");
+    setIsLoading(true);
+    setIsProcessing(true);
+  
     try {
       const response = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message: messageText }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
       }
-
+  
       const data = await response.json();
-
-      if (!data.response || !data.response.voice) {
+  
+      if (!data.response || !data.response.text || !data.response.voice) {
         throw new Error("Invalid response format from server");
       }
+  
+      setIsProcessing(false);
+      setIsDoneThinking(true);
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Adjust duration if necessary
 
       playAudio(data.response.voice);
+      if (!textOverride) {
+        setInputText("");
+      }
     } catch (error) {
       setErrorMessage(`Failed to send request: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
